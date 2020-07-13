@@ -14,5 +14,10 @@ namespace Szpital
             this.nazwa = nazwa;
             this.typ = typ;
         }
+
+        public override string ToString()
+        {
+            return $"{nazwa} ({typ})";
+        }
     }
 }

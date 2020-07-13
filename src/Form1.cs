@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Szpital
@@ -18,8 +12,17 @@ namespace Szpital
         private delegate void RemoveFromListViewDelegate(ListView list, int index);
         private delegate void ClearListViewDelegate(ListView list);
         public static List<Lekarz> lekarze = new List<Lekarz>();
+        List<Choroba> choroby = new List<Choroba>();
         List<Badanie> badania = new List<Badanie>();
         Rejestracja rejestracja;
+
+        Thread rezonansThread;
+        Thread USGThread;
+        Thread krewThread;
+        Thread kardiologThread;
+        Thread psychiatraThread;
+        Thread ortopedaThread;
+        Thread rejestracjaThread;
 
         public Form1()
         {
@@ -27,43 +30,59 @@ namespace Szpital
             InitializeComponent();
 
             InitOdzialRatunkowy();
-        }
 
-        //konsola
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool AllocConsole();
+            foreach(Choroba c in choroby)
+            {
+                chorobaComboBox.Items.Add(c);
+            }
+        }
 
         private void InitOdzialRatunkowy()
         {
+            choroby.Add(new Choroba("zlamanie", "ortopedyczna"));
+            choroby.Add(new Choroba("zwichniecie", "ortopedyczna"));
+            choroby.Add(new Choroba("zwyrodnienie kregoslupa", "ortopedyczna"));
+            choroby.Add(new Choroba("lordoza", "ortopedyczna"));
+            choroby.Add(new Choroba("zapalenie kosci", "ortopedyczna"));
+
+            choroby.Add(new Choroba("nadcisnienie tetnicze", "kardiologiczna"));
+            choroby.Add(new Choroba("zawał", "kardiologiczna"));
+            choroby.Add(new Choroba("miażdżyca", "kardiologiczna"));
+            choroby.Add(new Choroba("zapalenie mięśnia sercowego", "kardiologiczna"));
+
+            choroby.Add(new Choroba("depresja", "psychologiczna"));
+            choroby.Add(new Choroba("lęki", "psychologiczna"));
+            choroby.Add(new Choroba("drazliwosc", "psychologiczna"));
+            choroby.Add(new Choroba("bezsennosc", "psychologiczna"));
+
             Badanie rezonans = new Badanie("rezonans magnetyczny", rezonansObslugiwanyListView, rezonansKolejkaListView);
             badania.Add(rezonans);
-            Thread rezonansThread = new Thread(rezonans.Dzialaj);
+            rezonansThread = new Thread(rezonans.Dzialaj);
 
             Badanie USG = new Badanie("USG", USGObslugiwanyListView, USGKolejkaListView);
             badania.Add(USG);
-            Thread USGThread = new Thread(USG.Dzialaj);
+            USGThread = new Thread(USG.Dzialaj);
 
             Badanie krew = new Badanie("badanie krwi", krewObslugiwanyListView, krewKolejkaListView);
             badania.Add(krew);
-            Thread krewThread = new Thread(krew.Dzialaj);
+            krewThread = new Thread(krew.Dzialaj);
 
 
             Lekarz kardiolog = new Lekarz("Kardiolog", kardiologObslugiwanyListView, kardiologKolejkaListView, badania);
             lekarze.Add(kardiolog);
-            Thread kardiologThread = new Thread(kardiolog.Lecz);
+            kardiologThread = new Thread(kardiolog.Lecz);
 
             Lekarz psychiatra = new Lekarz("Psychiatra", psychiatraObslugiwanyListView, psychiatraKolejkaListView, badania);
             lekarze.Add(psychiatra);
-            Thread psychiatraThread = new Thread(psychiatra.Lecz);
+            psychiatraThread = new Thread(psychiatra.Lecz);
 
             Lekarz ortopeda = new Lekarz("Ortopeda", ortopedaObslugiwanyListView, ortopedaKolejkaListView, badania);
             lekarze.Add(ortopeda);
-            Thread ortopedaThread = new Thread(ortopeda.Lecz);
+            ortopedaThread = new Thread(ortopeda.Lecz);
 
 
-            rejestracja = new Rejestracja(lekarze, rejestracjaListView);
-            Thread rejestracjaThread = new Thread(rejestracja.Obsluguj);
+            rejestracja = new Rejestracja(lekarze, rejestracjaListView, choroby);
+            rejestracjaThread = new Thread(rejestracja.Obsluguj);
 
             rezonansThread.Start();
             USGThread.Start();
@@ -74,7 +93,10 @@ namespace Szpital
             rejestracjaThread.Start();
         }
 
-        
+        //konsola
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool AllocConsole();
 
         private void dodajLosowegoPacjentaButton_Click(object sender, EventArgs e)
         {
@@ -83,10 +105,24 @@ namespace Szpital
 
         private void dodaj10LosowychPacjentowButton_Click(object sender, EventArgs e)
         {
-            for(int i = 0; i < 10; i++)
+            int ilePacjentow;
+            if(!int.TryParse(wieluPacjentowTextBox.Text, out ilePacjentow))
+            {
+                ilePacjentow = 1;
+            }
+
+            for(int i = 0; i < ilePacjentow; i++)
             {
                 rejestracja.PrzyjmijPacjenta();
             }
+        }
+
+        private void dodajKonkretnegoPacjentaButton_Click(object sender, EventArgs e)
+        {
+            Choroba choroba = (Choroba)chorobaComboBox.SelectedItem;
+            bool ciezkiPrzypadek = ciezkiPrzypadekCheckBox.Checked;
+
+            rejestracja.PrzyjmijPacjenta(choroba, ciezkiPrzypadek);
         }
 
         public static void AddToListView(ListView list,string text)
@@ -126,6 +162,17 @@ namespace Szpital
             {
                 list.Items.Clear();
             }
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            rezonansThread.Abort();
+            USGThread.Abort();
+            krewThread.Abort();
+            kardiologThread.Abort();
+            psychiatraThread.Abort();
+            ortopedaThread.Abort();
+            rejestracjaThread.Abort();
         }
     }
 }

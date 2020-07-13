@@ -35,10 +35,10 @@ namespace Szpital
                 Form1.AddToListView(obslugiwanyList, pacjent.getName());
                 Console.WriteLine($"[{nazwa}] Leczy {pacjent.getNumer()} z podejrzeniem {pacjent.getChoroba().nazwa}");
 
-                Thread.Sleep(random.Next(3000));
+                Thread.Sleep(random.Next(6000));
 
                 Form1.RemoveFromListView(obslugiwanyList, 0);
-                if (random.NextDouble() < 0.3)
+                if (random.NextDouble() < 0.4)
                 {
                     int nrBadania = random.Next(badania.Count);
                     if (pacjent.ciezkiPrzypadek)

@@ -30,7 +30,7 @@ namespace Szpital
                 Form1.RemoveFromListView(kolejkaList, 0);
                 Form1.AddToListView(obslugiwanyList, pacjent.getName());
                 Console.WriteLine($"[{nazwa}] Badanie {pacjent.getNumer()}");
-                Thread.Sleep(random.Next(4000));
+                Thread.Sleep(random.Next(6000));
 
                 int nrLekarz = 0;
                 if (pacjent.getChoroba().typ == "kardiologiczna")

@@ -10,37 +10,20 @@ namespace Szpital
     {
         ListView rejestracjaView;
         public List<Lekarz> lekarze;
-        List<Choroba> choroby = new List<Choroba>();
+        List<Choroba> choroby;
         static private object _lock = new object();
         static Queue<Pacjent> kolejkaRejestracja = new Queue<Pacjent>();
         int pacjenci = 0;
 
-        public Rejestracja(List<Lekarz> l, ListView rv)
+        public Rejestracja(List<Lekarz> l, ListView rv, List<Choroba> ch)
         {
             lekarze = l;
             rejestracjaView = rv;
-
-            choroby.Add(new Choroba("zlamanie","ortopedyczna"));
-            choroby.Add(new Choroba("zwichniecie", "ortopedyczna"));
-            choroby.Add(new Choroba("zwyrodnienie kregoslupa", "ortopedyczna"));
-            choroby.Add(new Choroba("lordoza", "ortopedyczna"));
-            choroby.Add(new Choroba("zapalenie kosci", "ortopedyczna"));
-
-            choroby.Add(new Choroba("nadcisnienie tetnicze", "kardiologiczna"));
-            choroby.Add(new Choroba("zawał", "kardiologiczna"));
-            choroby.Add(new Choroba("miażdżyca", "kardiologiczna"));
-            choroby.Add(new Choroba("zapalenie mięśnia sercowego", "kardiologiczna"));
-
-            choroby.Add(new Choroba("depresja", "psychologiczna"));
-            choroby.Add(new Choroba("lęki", "psychologiczna"));
-            choroby.Add(new Choroba("drazliwosc", "psychologiczna"));
-            choroby.Add(new Choroba("bezsennosc", "psychologiczna"));
+            choroby = ch;
         }
 
         public void Obsluguj()
         {
-            Random random = new Random();
-
             while (true)
             {
                 Pacjent pacjent = KierujPacjentow();
@@ -56,8 +39,8 @@ namespace Szpital
                 {
                     nrLekarz = 2;
                 }
-
                 Console.WriteLine($"[Rejestracja] {pacjent.getNumer()} -> {lekarze[nrLekarz].getNazwa()}");
+
                 if (pacjent.ciezkiPrzypadek)
                 {
                     lekarze[nrLekarz].CzekajWKolejcePozaKolejnoscia(pacjent);
@@ -67,7 +50,7 @@ namespace Szpital
                     lekarze[nrLekarz].CzekajWKolejce(pacjent);
                 }
                 
-                Thread.Sleep(200);
+                Thread.Sleep(400);
             }
         }
 
@@ -88,7 +71,26 @@ namespace Szpital
         {
             lock (_lock)
             {
-                Pacjent pacjent = new Pacjent(pacjenci, choroby[new Random().Next(choroby.Count)]);
+                Choroba choroba = choroby[new Random().Next(choroby.Count)];
+                bool ciezkiPrzypadek;
+                if ((new Random()).NextDouble() < 0.2)
+                {
+                    ciezkiPrzypadek = true;
+                }
+                else
+                {
+                    ciezkiPrzypadek = false;
+                }
+
+                PrzyjmijPacjenta(choroba, ciezkiPrzypadek);
+            }
+        }
+
+        public void PrzyjmijPacjenta(Choroba choroba, bool ciezkiPrzypadek)
+        {
+            lock (_lock)
+            {
+                Pacjent pacjent = new Pacjent(pacjenci, choroba, ciezkiPrzypadek);
                 Console.WriteLine($"[Rejestracja] Przyjeto pacjenta {pacjenci} z podejrzeniem {pacjent.getChoroba().nazwa}");
                 kolejkaRejestracja.Enqueue(pacjent);
                 Form1.AddToListView(rejestracjaView, pacjent.getName());

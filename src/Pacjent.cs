@@ -7,23 +7,22 @@ namespace Szpital
     public class Pacjent
     {
         public bool ciezkiPrzypadek;
-        public Choroba choroba;
+        Choroba choroba;
         string name;
         int nrPacjenta;
 
-        public Pacjent(int nr, Choroba ch)
+        public Pacjent(int nr, Choroba ch, bool ciezkiPrzypadek)
         {
+            this.ciezkiPrzypadek = ciezkiPrzypadek;
             nrPacjenta = nr;
             choroba = ch;
 
-            if((new Random()).NextDouble() < 0.2)
+            if(ciezkiPrzypadek)
             {
-                ciezkiPrzypadek = true;
                 name = "#" + nrPacjenta + " CIEZKI PRZYPADEK";
             }
             else
             {
-                ciezkiPrzypadek = false;
                 name = "#" + nrPacjenta;
             }
         }
